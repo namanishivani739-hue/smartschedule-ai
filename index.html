@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SmartSchedule AI — Intelligent Timetable Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a26;
+  --border: rgba(255,255,255,0.08);
+  --accent: #7c6fff;
+  --accent2: #ff6b9d;
+  --accent3: #00e5c3;
+  --text: #f0f0f8;
+  --muted: #8888a8;
+  --success: #00e5a0;
+  --warning: #ffb547;
+  --danger: #ff5a7a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+h1,h2,h3,.brand{font-family:'Syne',sans-serif}
+
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 800px 600px at 20% 10%,rgba(124,111,255,0.08) 0%,transparent 70%),
+  radial-gradient(ellipse 600px 400px at 80% 80%,rgba(0,229,195,0.05) 0%,transparent 70%);
+  pointer-events:none;z-index:0}
+
+nav{position:sticky;top:0;z-index:100;background:rgba(10,10,15,0.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px}
+.brand{font-size:18px;font-weight:800;letter-spacing:-0.5px}
+.brand span{color:var(--accent)}
+.nav-pills{display:flex;gap:4px}
+.nav-pill{padding:6px 14px;font-size:13px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:8px;font-family:'DM Sans',sans-serif;transition:all .2s}
+.nav-pill.active,.nav-pill:hover{background:var(--surface2);color:var(--text)}
+.nav-pill.active{color:var(--accent)}
+.api-indicator{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s}
+.status-dot.online{background:var(--success);box-shadow:0 0 8px var(--success);animation:pulse 2s infinite}
+.status-dot.offline{background:var(--warning);box-shadow:0 0 8px var(--warning)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+main{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:32px 24px}
+
+.page{display:none}
+.page.active{display:block;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* HERO */
+.hero{text-align:center;padding:48px 0 40px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(124,111,255,0.12);border:1px solid rgba(124,111,255,0.3);border-radius:100px;padding:5px 14px;font-size:12px;color:var(--accent);margin-bottom:24px}
+.hero h1{font-size:clamp(36px,5vw,64px);font-weight:800;line-height:1.1;letter-spacing:-2px;margin-bottom:16px}
+.hero h1 .grad{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{font-size:17px;color:var(--muted);max-width:500px;margin:0 auto 32px;line-height:1.6}
+.cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+
+.btn{padding:12px 24px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;border:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#6a5df0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,111,255,0.4)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn-outline:hover{background:var(--surface2);border-color:rgba(255,255,255,0.15)}
+.btn-sm{padding:7px 16px;font-size:13px;border-radius:8px}
+.btn-danger{background:rgba(255,90,122,0.15);color:var(--danger);border:1px solid rgba(255,90,122,0.3)}
+.btn-success{background:var(--success);color:#000;font-weight:600}
+.btn-success:hover{background:#00cc8f;transform:translateY(-1px)}
+.btn-teal{background:rgba(0,229,195,0.15);color:var(--accent3);border:1px solid rgba(0,229,195,0.3)}
+.btn-teal:hover{background:rgba(0,229,195,0.25)}
+
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:40px 0}
+.feature-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+.feature-icon{font-size:28px;margin-bottom:12px}
+.feature-card h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.feature-card p{font-size:13px;color:var(--muted);line-height:1.5}
+
+.how-section{margin-top:40px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:20px}
+.step{display:flex;align-items:flex-start;gap:14px}
+.step-num{width:32px;height:32px;border-radius:50%;background:rgba(124,111,255,0.15);border:1px solid rgba(124,111,255,0.3);color:var(--accent);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+.section-title{font-size:22px;font-weight:700;margin-bottom:20px;letter-spacing:-0.5px}
+.section-title span{color:var(--accent)}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px}
+input,select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border .2s}
+input:focus,select:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+.form-group{margin-bottom:16px}
+
+.tag{display:inline-flex;align-items:center;gap:6px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:13px;margin:3px}
+.tag button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0;line-height:1;transition:color .2s}
+.tag button:hover{color:var(--danger)}
+.add-row{display:flex;gap:10px;align-items:flex-end}
+.add-row input{flex:1}
+
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center}
+.stat-value{font-size:28px;font-weight:700;font-family:'Syne',sans-serif}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px}
+.c-purple{color:var(--accent)}
+.c-green{color:var(--success)}
+.c-pink{color:var(--accent2)}
+.c-teal{color:var(--accent3)}
+
+/* SECTION TABS */
+.section-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.sec-tab{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface2);color:var(--muted);transition:all .2s;font-family:'DM Sans',sans-serif}
+.sec-tab.active{background:rgba(124,111,255,0.15);border-color:rgba(124,111,255,0.4);color:var(--accent)}
+
+/* TIMETABLE */
+.tt-wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th{background:var(--surface2);padding:10px 14px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);text-align:left;border-bottom:1px solid var(--border)}
+td{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:13px;vertical-align:top}
+td:first-child{color:var(--muted);font-weight:500;white-space:nowrap;width:90px}
+tr:hover td{background:rgba(124,111,255,0.04)}
+.cell{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin:2px 0}
+.cell-subject{font-weight:500;font-size:13px;color:var(--text)}
+.cell-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.cell.c0{border-color:rgba(124,111,255,0.4);background:rgba(124,111,255,0.09)}
+.cell.c1{border-color:rgba(0,229,195,0.4);background:rgba(0,229,195,0.09)}
+.cell.c2{border-color:rgba(255,107,157,0.4);background:rgba(255,107,157,0.09)}
+.cell.c3{border-color:rgba(255,181,71,0.4);background:rgba(255,181,71,0.09)}
+.cell.c4{border-color:rgba(100,220,255,0.4);background:rgba(100,220,255,0.09)}
+.cell.free{border:1px dashed var(--border);background:transparent}
+.cell.free .cell-subject{color:var(--muted);font-size:12px}
+
+.workload-bar{margin-bottom:16px}
+.workload-label{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.bar-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width 1s ease}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:500}
+.badge-success{background:rgba(0,229,160,0.15);color:var(--success)}
+.badge-warning{background:rgba(255,181,71,0.15);color:var(--warning)}
+.badge-danger{background:rgba(255,90,122,0.15);color:var(--danger)}
+.badge-info{background:rgba(124,111,255,0.15);color:var(--accent)}
+
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:16px;color:var(--muted);font-size:14px}
+.spinner{width:36px;height:36px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.alert-success{background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:var(--success)}
+.alert-error{background:rgba(255,90,122,0.1);border:1px solid rgba(255,90,122,0.3);color:var(--danger)}
+.alert-info{background:rgba(124,111,255,0.1);border:1px solid rgba(124,111,255,0.3);color:var(--accent)}
+.alert-warning{background:rgba(255,181,71,0.1);border:1px solid rgba(255,181,71,0.3);color:var(--warning)}
+
+.result-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.result-toolbar .btn{padding:8px 16px;font-size:13px}
+
+/* OFFLINE BANNER */
+.offline-banner{background:rgba(255,181,71,0.1);border:1px solid rgba(255,181,71,0.3);border-radius:10px;padding:10px 16px;font-size:13px;color:var(--warning);margin-bottom:16px;display:none}
+.offline-banner.show{display:flex;align-items:center;gap:8px}
+
+/* PRINT */
+@media print {
+  nav, .result-toolbar, .section-tabs, .stat-grid, .workload-bar, .btn { display: none !important; }
+  body { background: white; color: black; }
+  .card { border: 1px solid #ccc; background: white; }
+  th { background: #eee; color: #333; }
+  .cell { border: 1px solid #ccc; background: #f9f9f9; }
+  .cell-subject { color: black; }
+  .cell-meta { color: #666; }
+  .cell.free { background: white; }
+  .cell.free .cell-subject { color: #aaa; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">Smart<span>Schedule</span> AI</div>
+  <div class="nav-pills">
+    <button class="nav-pill active" onclick="showPage('home')">Home</button>
+    <button class="nav-pill" onclick="showPage('generate')">Generate</button>
+    <button class="nav-pill" onclick="showPage('result')">Timetable</button>
+  </div>
+  <div class="api-indicator">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="api-status">Checking...</span>
+  </div>
+</nav>
+
+<main>
+
+<!-- HOME -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <div class="hero-badge">✦ WE Hub Incubation · Team FUTURE DEVELOPER</div>
+    <h1>Conflict-free timetables<br>in <span class="grad">seconds</span></h1>
+    <p>AI-powered scheduling using Google OR-Tools CP-SAT solver. No clashes. No manual effort. Multiple sections.</p>
+    <div class="cta-row">
+      <button class="btn btn-primary" onclick="runOfflineDemo()">⚡ Try Demo</button>
+      <button class="btn btn-outline" onclick="showPage('generate')">Custom Schedule →</button>
+    </div>
+  </div>
+  <div class="features">
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>OR-Tools CP-SAT Solver</h3>
+      <p>Google's constraint programming engine guarantees optimal, conflict-free schedules every time.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏫</div>
+      <h3>Multi-Section Support</h3>
+      <p>Schedule multiple sections simultaneously. Teachers are never double-booked across sections.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Workload Analytics</h3>
+      <p>Visual workload balance charts help administrators ensure fair distribution among faculty.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📥</div>
+      <h3>Export & Print</h3>
+      <p>Download as CSV or print directly. Ready for notice boards and college management systems.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔗</div>
+      <h3>REST API</h3>
+      <p>Integrate with any existing college ERP via clean JSON API endpoints.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>RL Layer (Phase 2)</h3>
+      <p>Reinforcement learning agent will learn teacher preferences and optimize for satisfaction scores.</p>
+    </div>
+  </div>
+</div>
+
+<!-- GENERATE -->
+<div class="page" id="page-generate">
+  <div class="section-title">Configure <span>Schedule</span></div>
+  <p style="color:var(--muted);font-size:14px;margin-bottom:24px">Add your institution's data below to generate a conflict-free timetable</p>
+
+  <div id="gen-alert"></div>
+  <div class="offline-banner" id="offline-banner">⚠️ Backend offline — will use built-in solver demo when you generate</div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:14px">👨‍🏫 Teachers <span style="color:var(--muted);font-size:13px" id="teacher-count">(0)</span></div>
+      <div class="add-row form-group">
+        <div style="flex:1"><label>Teacher Name</label><input id="teacher-input" placeholder="e.g. Dr. Priya" onkeydown="if(event.key==='Enter')addTeacher()"/></div>
+        <button class="btn btn-outline btn-sm" onclick="addTeacher()">Add</button>
+      </div>
+      <div id="teacher-tags"></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;margin-bottom:14px">🏛️ Rooms <span style="color:var(--muted);font-size:13px" id="room-count">(0)</span></div>
+      <div class="add-row form-group">
+        <div style="flex:1"><label>Room Name</label><input id="room-input" placeholder="e.g. Room 101" onkeydown="if(event.key==='Enter')addRoom()"/></div>
+        <button class="btn btn-outline btn-sm" onclick="addRoom()">Add</button>
+      </div>
+      <div id="room-tags"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-weight:600;margin-bottom:14px">📚 Subjects <span style="color:var(--muted);font-size:13px" id="subject-count">(0)</span></div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap" class="form-group">
+      <div style="flex:2;min-width:140px"><label>Subject Name</label><input id="sub-name" placeholder="e.g. Mathematics" onkeydown="if(event.key==='Enter')addSubject()"/></div>
+      <div style="flex:2;min-width:140px"><label>Assign Teacher</label>
+        <select id="sub-teacher"><option value="">— select teacher —</option></select>
+      </div>
+      <div style="flex:1;min-width:80px"><label>Hrs/Week</label><input id="sub-hours" type="number" value="4" min="1" max="10" style="width:80px"/></div>
+      <button class="btn btn-outline btn-sm" onclick="addSubject()">Add</button>
+    </div>
+    <div id="subject-tags"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-weight:600;margin-bottom:14px">🏫 Sections</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap" class="form-group">
+      <div style="flex:2;min-width:140px"><label>Section Name</label><input id="sec-input" placeholder="e.g. Section A" onkeydown="if(event.key==='Enter')addSection()"/></div>
+      <button class="btn btn-outline btn-sm" onclick="addSection()">Add</button>
+    </div>
+    <div id="section-tags"></div>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px">Leave empty to use single section (Section A)</p>
+  </div>
+
+  <div class="card" style="margin-bottom:24px">
+    <div style="font-weight:600;margin-bottom:14px">⚙️ Schedule Settings</div>
+    <div class="grid-2">
+      <div class="form-group"><label>Periods Per Day</label>
+        <select id="slots-per-day">
+          <option value="5">5 periods</option>
+          <option value="6" selected>6 periods</option>
+          <option value="7">7 periods</option>
+          <option value="8">8 periods</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Working Days</label>
+        <select id="days">
+          <option value="5" selected>5 days (Mon–Fri)</option>
+          <option value="6">6 days (Mon–Sat)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap">
+    <button class="btn btn-success" onclick="generate()">🚀 Generate Timetable</button>
+    <button class="btn btn-outline" onclick="prefillDemo()">Load Sample Data</button>
+    <button class="btn btn-danger btn-sm" onclick="clearAll()">Clear All</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="page" id="page-result">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+    <div>
+      <div class="section-title" style="margin-bottom:4px">Generated <span>Timetable</span></div>
+      <div id="result-status"></div>
+    </div>
+    <div class="result-toolbar">
+      <button class="btn btn-teal" onclick="exportCSV()">📥 CSV</button>
+      <button class="btn btn-outline" onclick="window.print()">🖨️ Print</button>
+      <button class="btn btn-outline" onclick="showPage('generate')">← Edit</button>
+    </div>
+  </div>
+  <div id="section-tab-bar" class="section-tabs"></div>
+  <div id="result-content"><div class="loader"><div class="spinner"></div><span>Waiting...</span></div></div>
+</div>
+
+</main>
+
+<script>
+const API = 'http://localhost:5000';
+let state = { teachers:[], subjects:[], rooms:[], sections:[] };
+let lastResult = null;
+let apiOnline = false;
+let activeSectionTab = 0;
+
+// ─── API Status Check ──────────────────────────────────────────────────────
+async function checkAPI() {
+  try {
+    const r = await fetch(API + '/', { signal: AbortSignal.timeout(3000) });
+    if (r.ok) {
+      apiOnline = true;
+      document.getElementById('status-dot').className = 'status-dot online';
+      document.getElementById('api-status').textContent = 'API Online';
+      document.getElementById('offline-banner').classList.remove('show');
+    } else { setOffline(); }
+  } catch(e) { setOffline(); }
+}
+function setOffline() {
+  apiOnline = false;
+  document.getElementById('status-dot').className = 'status-dot offline';
+  document.getElementById('api-status').textContent = 'Offline (Demo Mode)';
+  document.getElementById('offline-banner').classList.add('show');
+}
+checkAPI();
+setInterval(checkAPI, 15000);
+
+// ─── Render helpers ────────────────────────────────────────────────────────
+function renderTeachers() {
+  document.getElementById('teacher-count').textContent = `(${state.teachers.length})`;
+  document.getElementById('teacher-tags').innerHTML = state.teachers.map((t,i) =>
+    `<span class="tag">👤 ${t.name}<button onclick="removeTeacher(${i})">×</button></span>`).join('');
+  // Update teacher dropdown
+  const sel = document.getElementById('sub-teacher');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— select teacher —</option>' +
+    state.teachers.map(t => `<option value="${t.name}" ${t.name===cur?'selected':''}>${t.name}</option>`).join('');
+}
+function renderRooms() {
+  document.getElementById('room-count').textContent = `(${state.rooms.length})`;
+  document.getElementById('room-tags').innerHTML = state.rooms.map((r,i) =>
+    `<span class="tag">🚪 ${r.name}<button onclick="removeRoom(${i})">×</button></span>`).join('');
+}
+function renderSubjects() {
+  document.getElementById('subject-count').textContent = `(${state.subjects.length})`;
+  document.getElementById('subject-tags').innerHTML = state.subjects.map((s,i) =>
+    `<span class="tag">📚 ${s.name} <span style="color:var(--muted);font-size:11px">(${s.teacher}, ${s.hours_per_week}h)</span><button onclick="removeSubject(${i})">×</button></span>`).join('');
+}
+function renderSections() {
+  document.getElementById('section-tags').innerHTML = state.sections.map((s,i) =>
+    `<span class="tag">🏫 ${s.name}<button onclick="removeSection(${i})">×</button></span>`).join('');
+}
+
+function addTeacher() {
+  const v = document.getElementById('teacher-input').value.trim();
+  if (!v || state.teachers.find(t=>t.name===v)) return;
+  state.teachers.push({name:v});
+  document.getElementById('teacher-input').value = '';
+  renderTeachers();
+}
+function addRoom() {
+  const v = document.getElementById('room-input').value.trim();
+  if (!v) return;
+  state.rooms.push({name:v, capacity:60});
+  document.getElementById('room-input').value = '';
+  renderRooms();
+}
+function addSubject() {
+  const name = document.getElementById('sub-name').value.trim();
+  const teacher = document.getElementById('sub-teacher').value;
+  const hours = parseInt(document.getElementById('sub-hours').value) || 4;
+  if (!name || !teacher) { showAlert('gen-alert','Please enter subject name and select a teacher','error'); return; }
+  state.subjects.push({name, teacher, hours_per_week: hours});
+  document.getElementById('sub-name').value = '';
+  renderSubjects();
+}
+function addSection() {
+  const v = document.getElementById('sec-input').value.trim();
+  if (!v || state.sections.find(s=>s.name===v)) return;
+  state.sections.push({name:v});
+  document.getElementById('sec-input').value = '';
+  renderSections();
+}
+function removeTeacher(i) { state.teachers.splice(i,1); renderTeachers(); }
+function removeRoom(i) { state.rooms.splice(i,1); renderRooms(); }
+function removeSubject(i) { state.subjects.splice(i,1); renderSubjects(); }
+function removeSection(i) { state.sections.splice(i,1); renderSections(); }
+function clearAll() {
+  state = {teachers:[], subjects:[], rooms:[], sections:[]};
+  renderTeachers(); renderRooms(); renderSubjects(); renderSections();
+}
+
+// ─── Generate ──────────────────────────────────────────────────────────────
+async function generate() {
+  if (!state.teachers.length || !state.subjects.length || !state.rooms.length) {
+    showAlert('gen-alert','Please add at least 1 teacher, 1 subject, and 1 room','error'); return;
+  }
+  showPage('result');
+  document.getElementById('result-content').innerHTML = '<div class="loader"><div class="spinner"></div>AI solving constraints…</div>';
+  document.getElementById('section-tab-bar').innerHTML = '';
+
+  const body = {
+    teachers: state.teachers,
+    subjects: state.subjects,
+    rooms: state.rooms,
+    sections: state.sections.length ? state.sections : null,
+    slots_per_day: parseInt(document.getElementById('slots-per-day').value),
+    days: parseInt(document.getElementById('days').value)
+  };
+
+  if (apiOnline) {
+    try {
+      const r = await fetch(API + '/api/generate', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+      });
+      const data = await r.json();
+      lastResult = data;
+      renderResult(data);
+      return;
+    } catch(e) { setOffline(); }
+  }
+  // Offline: use built-in JS solver
+  const data = offlineSolve(body);
+  lastResult = data;
+  renderResult(data);
+}
+
+// ─── Offline JS Demo ────────────────────────────────────────────────────────
+function runOfflineDemo() {
+  const teachers = [{name:'Dr. Priya'},{name:'Prof. Ramesh'},{name:'Ms. Kavitha'},{name:'Mr. Suresh'}];
+  const subjects = [
+    {name:'Mathematics', teacher:'Dr. Priya', hours_per_week:5},
+    {name:'Physics', teacher:'Prof. Ramesh', hours_per_week:4},
+    {name:'Computer Science', teacher:'Ms. Kavitha', hours_per_week:4},
+    {name:'English', teacher:'Mr. Suresh', hours_per_week:3},
+  ];
+  const rooms = [{name:'Room 101'},{name:'Room 102'},{name:'Lab 1'}];
+  const sections = [{name:'Section A'},{name:'Section B'}];
+  showPage('result');
+  document.getElementById('result-content').innerHTML = '<div class="loader"><div class="spinner"></div>Running demo schedule…</div>';
+  document.getElementById('section-tab-bar').innerHTML = '';
+  setTimeout(() => {
+    if (apiOnline) {
+      fetch(API + '/api/demo').then(r=>r.json()).then(data => { lastResult=data; renderResult(data); }).catch(() => {
+        const data = offlineSolve({teachers,subjects,rooms,sections,slots_per_day:6,days:5});
+        lastResult=data; renderResult(data);
+      });
+    } else {
+      const data = offlineSolve({teachers,subjects,rooms,sections,slots_per_day:6,days:5});
+      lastResult=data; renderResult(data);
+    }
+  }, 300);
+}
+
+// ─── Offline greedy solver (JS) ─────────────────────────────────────────────
+function offlineSolve(body) {
+  const {teachers, subjects, rooms, sections: rawSec, slots_per_day=6, days=5} = body;
+  const sections = rawSec || [{name:'Section A'}];
+  const days_list = ['Monday','Tuesday','Wednesday','Thursday','Friday'].slice(0,days);
+  const slots_list = Array.from({length:slots_per_day},(_,i)=>`Period ${i+1}`);
+  const all_slots = days_list.flatMap(d=>slots_list.map(s=>[d,s]));
+
+  const tt = {};
+  sections.forEach(sec => {
+    tt[sec.name] = {};
+    days_list.forEach(d => { tt[sec.name][d]={}; slots_list.forEach(s=>tt[sec.name][d][s]=null); });
+  });
+
+  const teacherBusy = {}; // key: teacher+day+slot
+  const roomBusy = {};    // key: room+day+slot
+  const secBusy = {};     // key: sec+day+slot
+  const scheduled = {};   // key: sec+subj -> count
+
+  // Shuffle slots for variety
+  const shuffled = [...all_slots].sort(()=>Math.random()-0.5);
+
+  for (const sec of sections) {
+    for (const sub of subjects) {
+      const needed = sub.hours_per_week || 3;
+      let count = 0;
+      for (const [d, sl] of shuffled) {
+        if (count >= needed) break;
+        const tk = `${sub.teacher}|${d}|${sl}`;
+        const sk = `${sec.name}|${d}|${sl}`;
+        // find a free room
+        const room = rooms.find(r => !roomBusy[`${r.name}|${d}|${sl}`]);
+        if (!teacherBusy[tk] && !secBusy[sk] && room) {
+          tt[sec.name][d][sl] = {subject:sub.name, teacher:sub.teacher, room:room.name};
+          teacherBusy[tk] = true;
+          roomBusy[`${room.name}|${d}|${sl}`] = true;
+          secBusy[sk] = true;
+          count++;
+        }
+      }
+    }
+  }
+
+  const workload = {};
+  teachers.forEach(t => workload[t.name] = 0);
+  let total = 0;
+  sections.forEach(sec => days_list.forEach(d => slots_list.forEach(sl => {
+    const e = tt[sec.name][d][sl];
+    if (e) { workload[e.teacher] = (workload[e.teacher]||0)+1; total++; }
+  })));
+
+  return {
+    timetable: tt[sections[0].name],
+    section_timetables: tt,
+    sections: sections.map(s=>s.name),
+    days: days_list, slots: slots_list,
+    workload, total_classes: total,
+    status: 'feasible', clashes: 0
+  };
+}
+
+// ─── Render Result ──────────────────────────────────────────────────────────
+const colorMap = {};
+let colorIdx = 0;
+function getColor(subject) {
+  if (colorMap[subject] === undefined) colorMap[subject] = colorIdx++ % 5;
+  return `c${colorMap[subject]}`;
+}
+
+function renderResult(data) {
+  const { section_timetables, sections, days, slots, workload, status, clashes, total_classes } = data;
+  const statusBadge = status === 'optimal'   ? '<span class="badge badge-success">✓ Optimal</span>' :
+                      status === 'feasible'  ? '<span class="badge badge-info">~ Feasible</span>' :
+                                               '<span class="badge badge-danger">✗ Infeasible</span>';
+  document.getElementById('result-status').innerHTML = statusBadge +
+    (clashes === 0 ? '&nbsp;<span class="badge badge-success">0 Conflicts</span>' :
+                     `&nbsp;<span class="badge badge-danger">${clashes} Conflicts</span>`);
+
+  // Section tabs
+  const tabBar = document.getElementById('section-tab-bar');
+  if (sections && sections.length > 1) {
+    tabBar.innerHTML = sections.map((s,i) =>
+      `<button class="sec-tab ${i===activeSectionTab?'active':''}" onclick="switchSection(${i})">${s}</button>`).join('');
+  } else { tabBar.innerHTML = ''; activeSectionTab = 0; }
+
+  renderSectionTable(data, activeSectionTab);
+}
+
+function switchSection(idx) {
+  activeSectionTab = idx;
+  document.querySelectorAll('.sec-tab').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  renderSectionTable(lastResult, idx);
+}
+
+function renderSectionTable(data, secIdx) {
+  const { section_timetables, sections, days, slots, workload } = data;
+  const secName = sections[secIdx];
+  const timetable = section_timetables[secName];
+  const maxLoad = Math.max(...Object.values(workload), 1);
+  const wColors = ['var(--accent)','var(--accent3)','var(--accent2)','var(--warning)','#64dcff'];
+
+  let html = `<div class="stat-grid">
+    <div class="stat"><div class="stat-value c-purple">${data.total_classes}</div><div class="stat-label">Total classes</div></div>
+    <div class="stat"><div class="stat-value c-green">${data.clashes===0?'0':data.clashes}</div><div class="stat-label">Conflicts</div></div>
+    <div class="stat"><div class="stat-value c-teal">${days.length}</div><div class="stat-label">Days</div></div>
+    <div class="stat"><div class="stat-value c-pink">${sections.length}</div><div class="stat-label">Sections</div></div>
+  </div>`;
+
+  html += `<div class="card" style="margin-bottom:20px"><div style="font-weight:600;margin-bottom:14px">Faculty Workload</div>`;
+  Object.entries(workload).forEach(([name,hrs],i) => {
+    const pct = Math.round((hrs/maxLoad)*100);
+    html += `<div class="workload-bar">
+      <div class="workload-label"><span>${name}</span><span style="color:var(--muted)">${hrs} classes</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${wColors[i%5]}"></div></div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  html += `<div class="card"><div style="font-weight:600;margin-bottom:14px">
+    Weekly Schedule${sections.length>1?' — '+secName:''}
+  </div><div class="tt-wrap"><table>
+    <tr><th>Slot</th>${days.map(d=>`<th>${d}</th>`).join('')}</tr>`;
+
+  for (const slot of slots) {
+    html += `<tr><td>${slot}</td>`;
+    for (const day of days) {
+      const cell = timetable[day][slot];
+      if (cell) {
+        html += `<td><div class="cell ${getColor(cell.subject)}">
+          <div class="cell-subject">${cell.subject}</div>
+          <div class="cell-meta">${cell.teacher} · ${cell.room}</div>
+        </div></td>`;
+      } else {
+        html += `<td><div class="cell free"><div class="cell-subject">—</div></div></td>`;
+      }
+    }
+    html += `</tr>`;
+  }
+  html += `</table></div></div>`;
+  document.getElementById('result-content').innerHTML = html;
+}
+
+// ─── CSV Export ──────────────────────────────────────────────────────────────
+function exportCSV() {
+  if (!lastResult) return;
+  const { section_timetables, sections, days, slots } = lastResult;
+  let csv = '';
+  for (const secName of sections) {
+    if (sections.length > 1) csv += `Section: ${secName}\n`;
+    csv += 'Slot,' + days.join(',') + '\n';
+    for (const slot of slots) {
+      let row = slot;
+      for (const day of days) {
+        const c = section_timetables[secName][day][slot];
+        row += ',' + (c ? `${c.subject} (${c.teacher} / ${c.room})` : 'Free');
+      }
+      csv += row + '\n';
+    }
+    csv += '\n';
+  }
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'timetable_smartschedule.csv';
+  a.click();
+}
+
+// ─── Prefill demo data ───────────────────────────────────────────────────────
+function prefillDemo() {
+  state.teachers = [{name:'Dr. Priya'},{name:'Prof. Ramesh'},{name:'Ms. Kavitha'},{name:'Mr. Suresh'}];
+  state.rooms = [{name:'Room 101',capacity:60},{name:'Room 102',capacity:60},{name:'Lab 1',capacity:30}];
+  state.subjects = [
+    {name:'Mathematics', teacher:'Dr. Priya', hours_per_week:5},
+    {name:'Physics', teacher:'Prof. Ramesh', hours_per_week:4},
+    {name:'Computer Science', teacher:'Ms. Kavitha', hours_per_week:4},
+    {name:'English', teacher:'Mr. Suresh', hours_per_week:3},
+  ];
+  state.sections = [{name:'Section A'},{name:'Section B'}];
+  renderTeachers(); renderRooms(); renderSubjects(); renderSections();
+  showAlert('gen-alert','Sample data loaded! Click Generate Timetable.','info');
+}
+
+// ─── Navigation ──────────────────────────────────────────────────────────────
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const pills = document.querySelectorAll('.nav-pill');
+  const map = {home:0, generate:1, result:2};
+  if (map[id] !== undefined) pills[map[id]].classList.add('active');
+}
+
+function showAlert(id, msg, type='info') {
+  const el = document.getElementById(id);
+  el.innerHTML = `<div class="alert alert-${type}">${msg}</div>`;
+  setTimeout(()=>el.innerHTML='', 4000);
+}
+</script>
+</body>
+</html>
